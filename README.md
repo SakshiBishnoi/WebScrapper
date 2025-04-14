@@ -180,6 +180,7 @@ flowchart TD
     G -->|Formats| K{CSV/JSON}
     H -->|Rotation| L[Proxy Pool]
     M --> N[PyQt5 GUI]
+    D --> O[default_config.json]
 ```
 
 ---
