@@ -303,3 +303,31 @@ class DynamicScraper(BaseScraper):
         Ensure the WebDriver is closed when the object is garbage collected.
         """
         self._close_driver()
+
+    def auto_extract(self, url: str) -> dict:
+        """
+        Smart automatic extraction for 'auto' mode: extracts main visible content.
+        Returns a dict with 'main_content' and 'url'.
+        """
+        html_content = self.fetch_url(url)
+        if not html_content:
+            logger.error(f"Failed to fetch URL: {url}")
+            return {"url": url, "main_content": None}
+        soup = self.parse_html(html_content)
+        main_tag = soup.find('main')
+        if main_tag:
+            text = main_tag.get_text(separator='\n', strip=True)
+        else:
+            # Find the largest <div> by text length
+            divs = soup.find_all('div')
+            if divs:
+                largest_div = max(divs, key=lambda d: len(d.get_text(strip=True)))
+                text = largest_div.get_text(separator='\n', strip=True)
+            else:
+                # Fallback to body
+                body = soup.body
+                text = body.get_text(separator='\n', strip=True) if body else ''
+        # Clean up text
+        lines = [line.strip() for line in text.splitlines() if line.strip()]
+        formatted = '\n'.join(lines)
+        return {"url": url, "main_content": formatted}

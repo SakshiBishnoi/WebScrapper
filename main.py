@@ -135,10 +135,8 @@ def interactive_mode(static_scraper, dynamic_scraper, exporter):
             if selectors:
                 data = dynamic_scraper.extract_data(url, selectors)
             else:
-                # Use automatic content detection
-                data = dynamic_scraper.scrape(url)
-                if data and isinstance(data, list) and len(data) > 0:
-                    data = data[0]  # Get first result
+                # Use smart automatic content detection
+                data = dynamic_scraper.auto_extract(url)
         else:
             if selectors:
                 data = static_scraper.extract_data_with_selectors(url, selectors)
