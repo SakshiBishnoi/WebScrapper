@@ -23,6 +23,7 @@ from rich.panel import Panel
 from rich.text import Text
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich import box
+from random import choice
 
 # Setup logging
 log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
@@ -92,23 +93,41 @@ def interactive_mode(static_scraper, dynamic_scraper, exporter):
     """
     console = Console()
 
-    console.print(Panel(Text("Web Scraper [bold cyan]Interactive Mode[/bold cyan]", justify="center"), style="bold white on black", box=box.ROUNDED))
-    console.print("[dim]Tip: Press [bold]Ctrl+C[/bold] at any time to exit.[/dim]\n")
+    # Dynamic example URLs
+    example_urls = [
+        "https://www.bbc.com/news",
+        "https://www.nytimes.com/",
+        "https://stripe.com/in",
+        "https://www.apple.com/",
+        "https://www.wikipedia.org/",
+        "https://www.amazon.com/",
+        "https://www.nike.com/",
+        "https://www.tesla.com/",
+        "https://www.coursera.org/",
+        "https://www.imdb.com/"
+    ]
+    default_url = choice(example_urls)
+    url_hint = "\n[dim]Examples:[/] " + ", ".join(choice(example_urls) for _ in range(3))
+
+    console.print(Panel(Text("Web Scraper Interactive Mode", justify="center"), style="bold white on black", box=box.ROUNDED))
+    console.print("[dim]Tip: Press [bold]Ctrl+C[/] at any time to exit.[/dim]\n")
 
     # Get URL
-    url = Prompt.ask("[bold green]🔗 Enter URL to scrape[/bold green]", default="https://www.apple.com/shop/buy-iphone/iphone-15")
+    console.print(url_hint)
+    url = Prompt.ask("[bold green]🔗 Enter URL to scrape[/]", default=default_url)
     if not url.strip():
-        console.print("[red]Error: URL cannot be empty[/red]")
+        console.print("[red]Error: URL cannot be empty[/]")
         return
 
     # Choose scraper type
-    use_dynamic = Confirm.ask("[bold yellow]✨ Use dynamic scraper for JavaScript content?[/bold yellow]", default=True)
+    use_dynamic = Confirm.ask("[bold yellow]✨ Use dynamic scraper for JavaScript content?[/]", default=True)
 
-    # Get selectors
-    console.print(Panel("[bold]Enter CSS selectors[/bold] (format: [cyan]key=selector[/cyan], one per line, empty line to finish)\n[dim]Or type 'auto' to use automatic content detection[/dim]", style="bold blue", box=box.SQUARE))
+    # Show selector hints
+    selector_hints = "\n[dim]Examples:[/] [cyan]title=h1[/], [cyan]paragraphs=p[/], [cyan]links=a[/], [cyan]auto[/]"
+    console.print(Panel("[bold]Enter CSS selectors[/] (format: [cyan]key=selector[/], one per line, empty line to finish)\n[dim]Or type 'auto' to use automatic content detection[/]" + selector_hints, style="bold blue", box=box.SQUARE))
     selectors = {}
     while True:
-        line = Prompt.ask("[grey]Selector[/grey]", default="auto" if not selectors else "")
+        line = Prompt.ask("[grey]Selector[/]", default="auto" if not selectors else "")
         if not line.strip():
             break
         if line.lower() == 'auto':
@@ -118,16 +137,17 @@ def interactive_mode(static_scraper, dynamic_scraper, exporter):
             key, selector = line.split('=', 1)
             selectors[key.strip()] = selector.strip()
         else:
-            console.print("[red]Invalid format. Use key=selector or type 'auto'.[/red]")
+            console.print("[red]Invalid format. Use key=selector or type 'auto'.[/]")
 
     # Choose export format
-    export_format = Prompt.ask("[bold magenta]📦 Export format[/bold magenta]", choices=["csv", "json"], default="json")
+    export_format = Prompt.ask("[bold magenta]📦 Export format[/]", choices=["csv", "json"], default="json")
 
     # Get output filename
-    output_file = Prompt.ask("[bold blue]💾 Output filename (without extension)[/bold blue]", default=f"scrape_result_{int(time.time())}")
+    output_file = Prompt.ask("[bold blue]💾 Output filename (without extension)[/]", default=f"scrape_result_{int(time.time())}")
 
     # Run scraper
-    console.print(Panel(f"[bold green]🚀 Scraping [cyan]{url}[/cyan]...[/bold green]", style="bold green", box=box.ROUNDED))
+    console.print(Panel(f"[bold green]🚀 Scraping [cyan]{url}[/]...[/]", style="bold green", box=box.ROUNDED))
+    start_time = time.time()
     try:
         with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
             task = progress.add_task("Scraping...", start=False)
@@ -146,20 +166,19 @@ def interactive_mode(static_scraper, dynamic_scraper, exporter):
             progress.update(task, description="Exporting data...")
             time.sleep(0.2)
             if not data:
-                console.print("[bold red]No data extracted[/bold red]")
+                console.print("[bold red]No data extracted[/]")
                 return
             if export_format == 'csv':
                 file_path = exporter.export_to_csv([data], output_file)
             else:
                 file_path = exporter.export_to_json(data, output_file)
-        console.print(Panel(f"[bold green]✅ Data exported to:[/bold green] [cyan]{file_path}[/cyan]", style="bold green", box=box.ROUNDED))
-        # Display preview
-        preview = json.dumps(data, indent=2, ensure_ascii=False)
-        if len(preview) > 800:
-            preview = preview[:800] + "...\n[truncated]"
-        console.print(Panel(preview, title="[bold]Data Preview[/bold]", style="white on black", box=box.SQUARE))
+        elapsed = time.time() - start_time
+        console.print(Panel(f"[bold green]✅ Data exported to:[/] [cyan]{file_path}[/]", style="bold green", box=box.ROUNDED))
+        # Session summary
+        summary = f"[bold]Session Summary[/]\n[green]URL:[/] [cyan]{url}[/]\n[green]Exported:[/] [cyan]{file_path}[/]\n[green]Time taken:[/] [cyan]{elapsed:.2f} seconds[/]"
+        console.print(Panel(summary, style="bold white on black", box=box.ROUNDED))
     except Exception as e:
-        console.print(Panel(f"[bold red]❌ Error during scraping:[/bold red] {e}", style="bold red", box=box.ROUNDED))
+        console.print(Panel(f"[bold red]❌ Error during scraping:[/] {e}", style="bold red", box=box.ROUNDED))
 
 
 def main():
@@ -270,10 +289,6 @@ def main():
                 
                 logger.info(f"Data exported to: {file_path}")
                 print(f"\nData exported to: {file_path}")
-                
-                # Display preview
-                print("\nData Preview:")
-                print(json.dumps(data, indent=2, ensure_ascii=False)[:500] + "..." if len(json.dumps(data)) > 500 else json.dumps(data, indent=2, ensure_ascii=False))
                 
             except Exception as e:
                 logger.error(f"Error during scraping: {e}", exc_info=True)
