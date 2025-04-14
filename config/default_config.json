@@ -1,0 +1,56 @@
+{
+  "scraper": {
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+    "timeout": 30,
+    "retry_count": 3,
+    "retry_delay": 5,
+    "respect_robots_txt": true,
+    "rate_limit": {
+      "requests_per_minute": 20,
+      "pause_between_requests": 3
+    },
+    "headers": {
+      "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.5"
+    }
+  },
+  "browser": {
+    "headless": true,
+    "window_size": [1920, 1080],
+    "implicit_wait": 10,
+    "page_load_timeout": 30,
+    "script_timeout": 30
+  },
+  "storage": {
+    "default_format": "csv",
+    "available_formats": ["csv", "json"],
+    "output_directory": "exports",
+    "export_options": {
+      "csv": {
+        "delimiter": ",",
+        "include_headers": true
+      },
+      "json": {
+        "indent": 2,
+        "ensure_ascii": false
+      }
+    },
+    "database": {
+      "type": "sqlite",
+      "path": "data/scraper.db"
+    }
+  },
+  "gui": {
+    "theme": "system",
+    "font_size": 12,
+    "window_size": [1024, 768],
+    "max_results_display": 1000,
+    "auto_save": true,
+    "save_interval": 300
+  },
+  "logging": {
+    "level": "INFO",
+    "file_rotation": 5,
+    "max_file_size": 10485760
+  }
+}
