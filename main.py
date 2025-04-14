@@ -17,6 +17,12 @@ import argparse
 import time
 from typing import Dict, List, Any, Optional
 from datetime import datetime
+from rich.console import Console
+from rich.prompt import Prompt, Confirm
+from rich.panel import Panel
+from rich.text import Text
+from rich.progress import Progress, SpinnerColumn, TextColumn
+from rich import box
 
 # Setup logging
 log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
@@ -82,86 +88,78 @@ def load_selectors(selectors_input: str) -> Dict[str, str]:
 def interactive_mode(static_scraper, dynamic_scraper, exporter):
     """
     Run the scraper in interactive mode, prompting the user for input.
-    
-    Args:
-        static_scraper: Static scraper instance
-        dynamic_scraper: Dynamic scraper instance
-        exporter: Data exporter instance
+    Now with a modern, minimal, and visually appealing CLI using 'rich'.
     """
-    print("\nInteractive Mode")
-    print("===============")
-    
+    console = Console()
+
+    console.print(Panel(Text("Web Scraper [bold cyan]Interactive Mode[/bold cyan]", justify="center"), style="bold white on black", box=box.ROUNDED))
+    console.print("[dim]Tip: Press [bold]Ctrl+C[/bold] at any time to exit.[/dim]\n")
+
     # Get URL
-    url = input("Enter URL to scrape: ").strip()
-    if not url:
-        print("Error: URL cannot be empty")
+    url = Prompt.ask("[bold green]🔗 Enter URL to scrape[/bold green]", default="https://www.apple.com/shop/buy-iphone/iphone-15")
+    if not url.strip():
+        console.print("[red]Error: URL cannot be empty[/red]")
         return
-    
+
     # Choose scraper type
-    use_dynamic = input("Use dynamic scraper for JavaScript content? (y/n): ").lower().startswith('y')
-    
+    use_dynamic = Confirm.ask("[bold yellow]✨ Use dynamic scraper for JavaScript content?[/bold yellow]", default=True)
+
     # Get selectors
-    print("\nEnter CSS selectors (format: key=selector, one per line, empty line to finish)")
-    print("Or type 'auto' to use automatic content detection:")
+    console.print(Panel("[bold]Enter CSS selectors[/bold] (format: [cyan]key=selector[/cyan], one per line, empty line to finish)\n[dim]Or type 'auto' to use automatic content detection[/dim]", style="bold blue", box=box.SQUARE))
     selectors = {}
     while True:
-        line = input("> ").strip()
-        if not line:
+        line = Prompt.ask("[grey]Selector[/grey]", default="auto" if not selectors else "")
+        if not line.strip():
             break
-        
         if line.lower() == 'auto':
-            # Use automatic content detection
             selectors = None
             break
-        
         if '=' in line:
             key, selector = line.split('=', 1)
             selectors[key.strip()] = selector.strip()
-    
+        else:
+            console.print("[red]Invalid format. Use key=selector or type 'auto'.[/red]")
+
     # Choose export format
-    export_format = input("\nExport format (csv/json): ").lower()
-    if export_format not in ['csv', 'json']:
-        export_format = 'json'
-    
+    export_format = Prompt.ask("[bold magenta]📦 Export format[/bold magenta]", choices=["csv", "json"], default="json")
+
     # Get output filename
-    output_file = input("Output filename (without extension): ").strip()
-    if not output_file:
-        output_file = f"scrape_result_{int(time.time())}"
-    
+    output_file = Prompt.ask("[bold blue]💾 Output filename (without extension)[/bold blue]", default=f"scrape_result_{int(time.time())}")
+
     # Run scraper
-    print(f"\nScraping {url}...")
+    console.print(Panel(f"[bold green]🚀 Scraping [cyan]{url}[/cyan]...[/bold green]", style="bold green", box=box.ROUNDED))
     try:
-        if use_dynamic and dynamic_scraper:
-            if selectors:
-                data = dynamic_scraper.extract_data(url, selectors)
+        with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as progress:
+            task = progress.add_task("Scraping...", start=False)
+            progress.start_task(task)
+            time.sleep(0.3)  # Small delay for spinner effect
+            if use_dynamic and dynamic_scraper:
+                if selectors:
+                    data = dynamic_scraper.extract_data(url, selectors)
+                else:
+                    data = dynamic_scraper.auto_extract(url)
             else:
-                # Use smart automatic content detection
-                data = dynamic_scraper.auto_extract(url)
-        else:
-            if selectors:
-                data = static_scraper.extract_data_with_selectors(url, selectors)
+                if selectors:
+                    data = static_scraper.extract_data_with_selectors(url, selectors)
+                else:
+                    data = static_scraper.extract_data(url)
+            progress.update(task, description="Exporting data...")
+            time.sleep(0.2)
+            if not data:
+                console.print("[bold red]No data extracted[/bold red]")
+                return
+            if export_format == 'csv':
+                file_path = exporter.export_to_csv([data], output_file)
             else:
-                # Use automatic content detection
-                data = static_scraper.extract_data(url)
-        
-        if not data:
-            print("No data extracted")
-            return
-        
-        # Export data
-        if export_format == 'csv':
-            file_path = exporter.export_to_csv([data], output_file)
-        else:
-            file_path = exporter.export_to_json(data, output_file)
-        
-        print(f"\nData exported to: {file_path}")
-        
+                file_path = exporter.export_to_json(data, output_file)
+        console.print(Panel(f"[bold green]✅ Data exported to:[/bold green] [cyan]{file_path}[/cyan]", style="bold green", box=box.ROUNDED))
         # Display preview
-        print("\nData Preview:")
-        print(json.dumps(data, indent=2, ensure_ascii=False)[:500] + "..." if len(json.dumps(data)) > 500 else json.dumps(data, indent=2, ensure_ascii=False))
-        
+        preview = json.dumps(data, indent=2, ensure_ascii=False)
+        if len(preview) > 800:
+            preview = preview[:800] + "...\n[truncated]"
+        console.print(Panel(preview, title="[bold]Data Preview[/bold]", style="white on black", box=box.SQUARE))
     except Exception as e:
-        print(f"Error during scraping: {e}")
+        console.print(Panel(f"[bold red]❌ Error during scraping:[/bold red] {e}", style="bold red", box=box.ROUNDED))
 
 
 def main():
