@@ -6,6 +6,7 @@
 ▸ [🚀 Features](#-features)  
 ▸ [💡 Usage Examples](#-usage-examples)  
 ▸ [🖥️ Interactive CLI](#-interactive-cli)  
+▸ [🖼️ Modern GUI](#-modern-gui)  
 ▸ [🏗️ Project Structure](#-project-architecture)  
 ▸ [⚙️ Installation](#-installation)  
 </details>
@@ -70,6 +71,9 @@ python main.py -u https://react-app.example.com -s '{"main": "main"}' -d
 
 # Using a selectors file
 python main.py -u https://example.com -s selectors.json -o results -f csv
+
+# 🚦 Modern GUI (recommended for everyone!)
+python main.py --gui
 ```
 
 ---
@@ -114,6 +118,51 @@ Time taken: 3.21 seconds
 
 ---
 
+## 🖼️ Modern GUI
+
+> **New!** Experience web scraping like never before with our advanced, beautiful, and interactive GUI.
+
+### 🖼️ GUI Screenshot
+
+<p align="center">
+  <img src="images/image.png" alt="WebScraper GUI Screenshot" width="700"/>
+  <br>
+  <em>Modern, dark, and beautiful — the WebScraper GUI in action!</em>
+</p>
+
+### 🎨 **Theme & UX**
+- **Major color:** Black  
+- **Accent:** White (text, icons)  
+- **Highlight:** Red (actions, progress, errors)  
+- **Material-inspired, minimal, and futuristic**
+- **Responsive, clean, and visually balanced**
+
+### 🪟 **How to Launch**
+```bash
+python main.py --gui
+```
+
+### 🖱️ **Key GUI Features**
+- **Selector Mode:** Auto or Custom (with smart toggling)
+- **Scraper Type:** Static or Dynamic (Dynamic is default)
+- **Live Log Tab:** See all terminal output, errors, and progress in real time
+- **Preview Tab:** Instantly view your results as a table or JSON
+- **Exported File Tab:** Open or copy the path to your exported data
+- **Modern controls:** All widgets are styled for 2025, with perfect spacing, icons, and color balance
+- **Keyboard and mouse friendly**
+- **Dark mode by default**
+
+### 🛠️ **Requirements for GUI**
+- `PyQt5`
+- `qt-material` (for the best look)
+
+Install with:
+```bash
+pip install PyQt5 qt-material
+```
+
+---
+
 ## 🏗️ Project Architecture
 
 ```mermaid
@@ -121,17 +170,16 @@ flowchart TD
     A[WebScrapper] --> B(scraper/)
     A --> C(utils/)
     A --> D(config/)
-    
+    A --> M(GUI/)
     B --> E[Static Scraper]
     B --> F[Dynamic Scraper]
-    
     C --> G[Data Export]
     C --> H[Proxy Management]
-    
     E -->|HTML Parsing| I[BeautifulSoup]
     F -->|Browser Automation| J[Selenium]
     G -->|Formats| K{CSV/JSON}
     H -->|Rotation| L[Proxy Pool]
+    M --> N[PyQt5 GUI]
 ```
 
 ---
@@ -142,6 +190,8 @@ flowchart TD
 pip install -r requirements.txt
 # For best CLI experience, also install:
 pip install rich
+# For the GUI:
+pip install PyQt5 qt-material
 ```
 
 ---
@@ -149,8 +199,10 @@ pip install rich
 ## 💡 Tips
 
 - Use `--interactive` for a guided, user-friendly scraping session.
+- Use `--gui` for the most advanced, beautiful scraping experience.
 - Use "auto" as a selector for smart, automatic content extraction.
 - All exports are saved in the `exports/` directory by default.
+- The Log tab shows all terminal output, errors, and progress in real time.
 
 ---
 
@@ -160,4 +212,4 @@ MIT
 
 ---
 
-*Made with 🕸️, 🤖, and a love for modern web scraping.*
+*Made with 🕸️, 🤖, and a love for modern web scraping. Now with a GUI that's as cool as your data!*
