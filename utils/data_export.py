@@ -91,12 +91,24 @@ class DataExporter:
         
         filepath = os.path.join(self.output_dir, filename)
         
+        # Enhance readability for main_content
+        def add_paragraphs(obj):
+            if isinstance(obj, dict) and 'main_content' in obj and isinstance(obj['main_content'], str):
+                lines = [line.strip() for line in obj['main_content'].splitlines() if line.strip()]
+                obj['main_content_paragraphs'] = lines
+            return obj
+        
         try:
+            # If data is a list, apply to each dict
+            if isinstance(data, list):
+                data_to_export = [add_paragraphs(dict(item)) for item in data]
+            else:
+                data_to_export = add_paragraphs(dict(data))
             with open(filepath, 'w', encoding='utf-8') as f:
                 if pretty:
-                    json.dump(data, f, indent=4, ensure_ascii=False)
+                    json.dump(data_to_export, f, indent=4, ensure_ascii=False)
                 else:
-                    json.dump(data, f, ensure_ascii=False)
+                    json.dump(data_to_export, f, ensure_ascii=False)
             
             logger.info(f"Successfully exported data to JSON: {filepath}")
             return filepath
