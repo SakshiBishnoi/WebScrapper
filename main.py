@@ -57,6 +57,7 @@ def parse_arguments():
     parser.add_argument("-d", "--dynamic", action="store_true", help="Use dynamic scraper for JavaScript-heavy sites")
     parser.add_argument("-c", "--config", help="Path to custom configuration file")
     parser.add_argument("--interactive", action="store_true", help="Run in interactive mode")
+    parser.add_argument("--gui", action="store_true", help="Run the GUI application")
     
     return parser.parse_args()
 
@@ -244,6 +245,16 @@ def main():
         # Run in interactive mode if requested
         if args.interactive:
             interactive_mode(static_scraper, dynamic_scraper, exporter)
+            return 0
+        
+        # Run in GUI mode if requested
+        if args.gui:
+            try:
+                from GUI.gui_main import run_gui
+                run_gui()
+            except ImportError as e:
+                print("PyQt5 is not installed. Please install it with 'pip install PyQt5'.")
+                logger.error(f"Failed to start GUI: {e}")
             return 0
         
         # Process command line arguments for direct scraping
